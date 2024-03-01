@@ -8,8 +8,9 @@
 void print_environment(void)
 {
 	extern char **environ;
+	int i;
 
-	for (int i = 0; environ[i] != NULL; i++)
+	for (i = 0; environ[i] != NULL; i++)
 	{
 		printf("%s\n", environ[i]);
 	}
@@ -26,6 +27,9 @@ void execute_command(char *command)
 	char *args[MAX_ARGUMENTS + 1];
 	char *token = strtok(command, " ");
 	int i = 0;
+	char path_command[MAX_COMMAND_LENGTH];
+	char *path_env;
+
 
 	while (token != NULL && i < MAX_ARGUMENTS)
 	{
@@ -48,9 +52,7 @@ void execute_command(char *command)
 			return;
 		}
 
-		char path_command[MAX_COMMAND_LENGTH];
-		char *path_env = getenv("PATH");
-
+		path_env = getenv("PATH");
 		if (path_env != NULL)
 		{
 			token = strtok(path_env, ":");
