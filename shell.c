@@ -8,9 +8,8 @@
 void print_environment(void)
 {
 	extern char **environ;
-	int i;
 
-	for (i = 0; environ[i] != NULL; i++)
+	for (int i = 0; environ[i] != NULL; i++)
 	{
 		printf("%s\n", environ[i]);
 	}
@@ -27,8 +26,6 @@ void execute_command(char *command)
 	char *args[MAX_ARGUMENTS + 1];
 	char *token = strtok(command, " ");
 	int i = 0;
-	char path_command[MAX_COMMAND_LENGTH];
-	char *path_env;
 
 	while (token != NULL && i < MAX_ARGUMENTS)
 	{
@@ -44,36 +41,15 @@ void execute_command(char *command)
 			handle_exit_command();
 			return;
 		}
-		if (strcmp(args[0], "ls") == 0)
-		{
-			pid_t pid = fork();
 
-			if (pid < 0)
-			{
-				fprintf(stderr, "Fork error\n");
-				return;
-			}
-			else if (pid == 0)
-			{
-				execvp("/bin/ls", args);
-				fprintf(stderr, "%s: not found\n", args[0]);
-				exit(1);
-			}
-			else
-			{
-				int status;
-				waitpid(pid, &status, 0);
-			}
-
-			return;
-		}
 		if (strcmp(args[0], "env") == 0)
 		{
 			handle_env_command();
 			return;
 		}
 
-		path_env = getenv("PATH");
+		char path_command[MAX_COMMAND_LENGTH];
+		char *path_env = getenv("PATH");
 
 		if (path_env != NULL)
 		{
@@ -104,39 +80,20 @@ void execute_command(char *command)
  */
 void run_shell(void)
 {
-	char *command = NULL;
-	size_t len = 0;
+	char command[MAX_COMMAND_LENGTH];
 	char prompt[] = "($) ";
 
 	while (1)
 	{
-		ssize_t read_bytes;
-
 		write(STDOUT_FILENO, prompt, sizeof(prompt) - 1);
 
-		read_bytes = getline(&command, &len, stdin);
-
-		if (read_bytes == -1)
+		if (read(STDIN_FILENO, command, sizeof(command)) == 0)
 		{
-			if (feof(stdin))
-			{
-				printf("\n");
-				break;
-			}
-			else
-			{
-				perror("getline");
-				exit(1);
-			}
+			break;
 		}
 
-		if (read_bytes > 0 && command[read_bytes - 1] == '\n')
-		{
-			command[read_bytes - 1] = '\0';
-		}
+		command[strcspn(command, "\n")] = '\0';
 
 		execute_command(command);
 	}
-
-	free(command);
 }
